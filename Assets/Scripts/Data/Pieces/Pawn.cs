@@ -38,7 +38,7 @@ namespace Data.Pieces
             if (forwardRight is not null && forwardRight.Side != Side)
                 moves.Add(forwardRight.Coordinates);
 
-            if (forward is null && (currentColumn is < 0 or > 7 || currentRow is < 0 or > 7)) 
+            if (forward is null && (currentColumn is >= 0 and <= 7 && currentRow is >= 0 and <= 7)) 
                 moves.Add(new Coordinates(currentColumn, currentRow + offset));
             else
                 return moves;
@@ -46,7 +46,7 @@ namespace Data.Pieces
             if (forwardPush is null && !HasMoved)
                 moves.Add(new Coordinates(currentColumn, currentRow + offset * 2));
 
-            ValidateMoves(ref moves);
+            ValidateMoves(moves);
             return moves;
         }
     }

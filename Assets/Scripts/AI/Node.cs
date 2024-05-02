@@ -1,82 +1,171 @@
 ﻿using System;
 using System.Collections.Generic;
-
 using Data;
 using Enums;
+using Managers;
 
 namespace AI
 {
     public class Node
     {
-        public int Depth { get; private set; }
-        public Node Parent { get; private set; }
-        public List<Node> Children { get; private set; }
-        public float HeuristicScore { get; private set; }
+        public int Depth;
+        public Node Parent;
+        public List<Node> Children;
+        public Piece[,] Grid;
+        public float HeuristicValue;
 
-        public bool IsRoot => Turn == Side.Empty;
-        public bool IsTerminal;
+        public Coordinates? Origin;
+        public Coordinates? Destination;
 
-        public Piece[,] Grid { get; private set; }
-        public Side Turn { get; private set; }
-        private Side OpponentTurn => Turn == Side.Light ? Side.Dark : Side.Light;
-
-        public Coordinates Piece { get; private set; }
-        public Coordinates Destination { get; private set; }
-
-        public Node(Node parent, Side turn, Piece[,] grid = null)
+        public Node(Piece[,] grid, int depth, Coordinates? origin, Coordinates? destination, Node parent = null)
         {
-            Turn = turn;
-            Parent = parent;
-            Children = GenerateChildren();
-            HeuristicScore = EvaluateHeuristics();
             Grid = Matrix.DuplicateSnapshot(grid);
+            Depth = depth;
+            Origin = origin;
+            Destination = destination;
+            Parent = parent;
+            Children = new List<Node>();
+
+            if (Origin != null && Destination != null)
+                PerformMove();
         }
 
-        private float EvaluateHeuristics()
+        public void GenerateChildren(Side turn)
         {
-            return 0f;
-        }
+            Children = new List<Node>();
+            List<Piece> sidePieces = Matrix.GetAllPieces(Grid, turn);
 
-        private List<Node> GenerateChildren()
-        {
-            List<Node> children = new();
-
-            List<Piece> sidePieces = Matrix.GetAllPieces(Grid, Turn);
+            if (Depth >= GameManager.Depth || IsTerminal())
+            { 
+                return;
+            }
 
             foreach (Piece piece in sidePieces)
             {
-                foreach (Coordinates moves in piece.AvailableMoves())
+                foreach (Coordinates move in piece.AvailableMoves())
                 {
-                    Node child = new Node(this, IsRoot ? Side.Light : OpponentTurn, Grid);
-                    VirtualPerform(child);
+                    Node child = new(Grid, Depth + 1, piece.Coordinates, move, this);
+                    Children.Add(child);
                 }
             }
-
-            return children;
         }
-        
-    
 
-    /// <summary>
-        /// Take a node, perform the move it's represent and update it's Grid for future reference
-        /// </summary>
-        /// <param name="node">The Node object to perform the move</param>
-        /// <exception cref="ArgumentException"></exception>
-        public static void VirtualPerform(Node node)
+        private void PerformMove()
         {
-            Piece origin = node.Grid[node.Piece.Column, node.Piece.Row];
-            Piece destination = node.Grid[node.Destination.Column, node.Destination.Row];
-            
-            if (origin == null || origin.Side != node.Turn)
-                throw new ArgumentException("Unexpected origin while Perfom(): origin can't be empty or from the opponent side");
-            if (destination is not null && destination.Equals(origin))
-                throw new ArgumentException("Unexpected destination while Perform(): destination can't be equals to origin.");
-            if (destination is not null && destination.Side == origin.Side)
-                throw new ArgumentException("Unexpected destination while Perform(): destination can't be an allied piece.");
-            
-            node.Grid[node.Destination.Column, node.Destination.Row] = origin;
-            node.Grid[node.Destination.Column, node.Destination.Row].Coordinates = node.Destination;
-            node.Grid[node.Piece.Column, node.Piece.Row] = null;
+            if (!Origin.HasValue || !Destination.HasValue)
+                throw new ArgumentException("Trying to PerformMove() with null Coordinate(s) : " + (!Origin.HasValue ? "Origin" : "") + (!Destination.HasValue ? ", Destination" : ""));
+
+            Piece pieceToMove = Grid[Origin.Value.Column, Origin.Value.Row];
+            // Piece destination = Grid[Destination.Value.Column, Destination.Value.Row];
+
+            Grid[Destination.Value.Column, Destination.Value.Row] = pieceToMove;
+            Grid[Origin.Value.Column, Origin.Value.Row] = null;
         }
+
+        public void EvaluateHeuristics()
+        {
+            return;
+        }
+
+        public bool IsTerminal()
+        {
+            return false;
+        }
+
+        #region Debug
+
+        public static void GenerateNodeTree(Piece[,] grid, int depth, Side startingTurn)
+        {
+            Node rootNode = new Node(grid, 0, null, null);
+            GenerateNodeTreeRecursive(rootNode, depth, startingTurn, 0);
+        }
+
+        private static void GenerateNodeTreeRecursive(Node node, int maxDepth, Side turn, int currentDepth)
+        {
+            string indent = new string(' ', currentDepth * 2);
+            Console.WriteLine($"{indent}{node.Depth}: {node.Origin} -> {node.Destination}");
+
+            if (currentDepth < maxDepth && !node.IsTerminal())
+            {
+                node.GenerateChildren(turn);
+
+                foreach (Node child in node.Children)
+                {
+                    GenerateNodeTreeRecursive(child, maxDepth, turn == Side.Light ? Side.Dark : Side.Light, currentDepth + 1);
+                }
+            }
+        }
+
+        #endregion
     }
+
+    #region Terminal Checks
+
+    /*
+    public bool IsTerminalNode(Node node)
+    {
+        // Check for terminal game state based on the node's Grid field
+        // ...
+    }
+
+    private bool IsCheckmate(Node node, Side side)
+    {
+        Coordinates kingPosition = Matrix.GetKing(Grid, side).Coordinates;
+
+        if (!IsKingInCheck(kingPosition, side)) {
+            return false;
+        }
+
+        List<Piece> pieces = Matrix.GetAllPieces(Grid, side);
+
+        foreach (Piece piece in pieces) {
+            foreach (Coordinates unused in piece.AvailableMoves()) {
+                return false; // If there's at least one legal move, it's not checkmate.
+            }
+        }
+
+        return true; // If the king is in check and there are no legal moves, it's checkmate.
+    }
+
+    private bool IsStalemate(Side side)
+    {
+        List<Piece> pieces = Matrix.GetAllPieces(Grid, side);
+
+        foreach (Piece piece in pieces)
+        {
+            foreach (Coordinates unused in piece.AvailableMoves())
+            {
+                // If there's at least one legal move, it's not stalemate.
+                return false;
+            }
+        }
+
+        Coordinates kingPosition = Matrix.GetKing(Grid, side).Coordinates;
+
+        if (IsKingInCheck(kingPosition, side))
+        {
+            return false;
+        }
+
+        // If the king is not in check and there are no legal moves, it's stalemate.
+        return true;
+    }
+
+    private bool IsKingInCheck(Coordinates kingPosition, Side side)
+    {
+        List<Piece> opponentPieces = Matrix.GetAllPieces(Grid, side);
+
+        foreach (Piece piece in opponentPieces)
+        {
+            if (piece.AvailableMoves().Contains(kingPosition))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    */
+
+    #endregion
 }

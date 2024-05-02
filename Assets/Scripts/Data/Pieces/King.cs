@@ -36,7 +36,7 @@ namespace Data.Pieces
                 availableMoves.Add(new Coordinates(column, row));
             }
 
-            ValidateMoves(ref availableMoves);
+            ValidateMoves(availableMoves);
             return availableMoves;
         }
     }

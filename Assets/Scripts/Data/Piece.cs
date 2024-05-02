@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 using Enums;
 using Data.Pieces;
-using Unity.VisualScripting;
 
 namespace Data
 {
@@ -60,7 +59,7 @@ namespace Data
         
         public abstract List<Coordinates> AvailableMoves();
         
-        protected virtual bool ValidateMoves(ref List<Coordinates> availableMoves)
+        protected virtual bool ValidateMoves(List<Coordinates> availableMoves)
         {
             int availableMoveSize = availableMoves.Count;
             

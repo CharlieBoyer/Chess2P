@@ -1,47 +1,63 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 using View;
 using Data;
 using Enums;
+using AI;
 
 namespace Managers
 {
     public class GameManager: MonoBehaviour
     {
-        [Header("Settings")]
-        public Board Board;
-        [Range(1,8)] public int AIDepth;
-        public bool EnableStepByStep;
+        #region Fields
+
+        #region Inspector
+
+            [Header("Settings")]
+            public Board Board;
+            [Range(1,8)] public int AIDepth;
+            [Range(0.001f, 3f)] public float AutoPlayInterval = 2;
+            public bool EnableStepByStep;
+            
+        #endregion
         
+        public static int Depth { get; private set; }
         public static Side CurrentPlayerTurn { get; private set; }
         public static Side OpponentTurn => (CurrentPlayerTurn == Side.Light ? Side.Dark : Side.Light);
+        public static int TurnCounter { get; private set; }
         
-        public static Action<Side> OnMoveMade;
-        
-        public static bool Checkmate { get; set; }
-        public static bool Check { get; set; }
-        
-        private static bool _updateOnce;
+        public bool Checkmate { get; set; }
+        public bool Stalemate { get; set; }
+        public bool Draw { get; set; }
 
+        private bool _updateOnce;
+        private bool _pauseAutoPlay;
         private bool _confirmEscape;
         private float _escapeTimer = 3f;
+
+        #endregion
         
         private void Awake()
         {
+            Depth = AIDepth;
             CurrentPlayerTurn = Side.Light;
+            TurnCounter = 1;
             Checkmate = false;
+            Checkmate = false;
+            Stalemate = false;
+            Draw = false;
         }
-
         private void Start()
         {
+            Node.GenerateNodeTree(Matrix.Grid, AIDepth, Side.Light);
             // StartCoroutine(StartGameLoop());
         }
-
         private void Update()
         {
-            CheckEmergencyEscape(Input.GetKeyDown(KeyCode.Escape));
+            CheckExitEscape(Input.GetKeyDown(KeyCode.Escape));
             
             if (_updateOnce) {
                 UIManager.UpdateTurn(CurrentPlayerTurn);
@@ -50,29 +66,7 @@ namespace Managers
         }
 
         #region Gameplay
-
-        private IEnumerator StartGameLoop()
-        {
-            while (!Checkmate) // Tant que la partie est pas finie
-            {
-                // Ask AI to think
-                // Wait until completion // yield return new WaitUntil(() => Think);
-                // Perform move
-                // Update Board
-                
-                if (EnableStepByStep) // Si mode pas-à-pas
-                {
-                    yield return new WaitUntil(() => Input.GetButtonDown("Submit") || Input.GetButtonDown("Jump"));
-                }
-                else
-                {
-                    yield return new WaitForSeconds(2);
-                }
-                
-                ChangeTurn();
-            }
-        }
-
+        
         public void PerformMovement(Coordinates origin, Coordinates destination)
         {
             Matrix.Perform(CurrentPlayerTurn, origin, destination);
@@ -82,43 +76,93 @@ namespace Managers
         private void ChangeTurn()
         {
             CurrentPlayerTurn = OpponentTurn;
+            TurnCounter++;
+        }
+
+        public void PauseAutoPlay()
+        {
+            _pauseAutoPlay = !_pauseAutoPlay;
         }
 
         #endregion
 
         #region AI
 
-        /*
-        [ContextMenu("Think")]
-        public void Think()
+        private void AIThink(Side playerSide)
         {
-            Node node = new Node(Matrix.Grid, CurrentPlayerTurn);
+            Node root = new Node(Matrix.Grid, 0, null, null);
+            Node bestMoveNode = MinMax(root, Depth, playerSide == CurrentPlayerTurn);
             
-            foreach (Piece piece in node.Grid)
+            if (bestMoveNode.Origin.HasValue && bestMoveNode.Destination.HasValue)
             {
-                if (piece == null) continue;
-                if (piece.Side != CurrentPlayerTurn) continue;
-                
-                foreach (Piece availableMove in piece.AvailableMoves(piece.Coordinates))
-                {
-                    
-                }
+                Coordinates origin = bestMoveNode.Origin.Value;
+                Coordinates destination = bestMoveNode.Destination.Value;
+
+                // Perform the move on the board using the origin and destination coordinates
+                // ...
+            }
+            else
+            {
+                // Handle the case where the Origin or Destination is null
+                // This could indicate an error or a terminal game state (e.g., checkmate or stalemate)
             }
         }
-        */
+
+        public Node MinMax(Node node, int depth, bool isMaximizingPlayer)
+        {
+            if (depth == 0 || node.IsTerminal())
+            {
+                node.EvaluateHeuristics();
+                return node;
+            }
+
+            if (isMaximizingPlayer)
+            {
+                float maxEval = float.MinValue;
+                Node bestNode = null;
+
+                foreach (Node child in node.Children)
+                {
+                    float eval = MinMax(child, depth - 1, false).HeuristicValue;
+                    if (eval > maxEval)
+                    {
+                        maxEval = eval;
+                        bestNode = child;
+                    }
+                }
+
+                return bestNode;
+            }
+            else
+            {
+                float minEval = float.MaxValue;
+                Node bestNode = null;
+
+                foreach (Node child in node.Children)
+                {
+                    float eval = MinMax(child, depth - 1, true).HeuristicValue;
+                    if (eval < minEval)
+                    {
+                        minEval = eval;
+                        bestNode = child;
+                    }
+                }
+
+                return bestNode;
+            }
+        }
 
         #endregion
         
         #region Utils
 
-        private void CheckEmergencyEscape(bool triggered)
+        private void CheckExitEscape(bool triggered)
         {
             if (triggered && _confirmEscape)
             {
-#if UNITY_EDITOR
-                UnityEditor.EditorApplication.ExitPlaymode();
-                UnityEditor.EditorApplication.ExitPlaymode();
-#endif
+                #if UNITY_EDITOR
+                    UnityEditor.EditorApplication.ExitPlaymode();
+                #endif
                 Application.Quit();
             }
                 
@@ -130,6 +174,11 @@ namespace Managers
                 _escapeTimer = 3f;
 
             _escapeTimer -= Time.deltaTime;
+        }
+        
+        private void DebugNodeTree(int depth, Piece[,] grid)
+        {
+
         }
 
         #endregion

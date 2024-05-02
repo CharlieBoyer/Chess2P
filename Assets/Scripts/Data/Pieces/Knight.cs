@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Enums;
 
 namespace Data.Pieces
@@ -35,28 +36,28 @@ namespace Data.Pieces
                 availableMoves.Add(new Coordinates(column, row));
             }
 
-            this.ValidateMoves(ref availableMoves);
+            ValidateMoves(availableMoves);
             return availableMoves;
         }
 
-        protected override bool ValidateMoves(ref List<Coordinates> availableMoves)
+        protected override bool ValidateMoves(List<Coordinates> availableMoves)
         {
-            List<Coordinates> trollList = new List<Coordinates>();
-
-            foreach (Coordinates move in availableMoves)
+            foreach (Coordinates move in availableMoves.ToList())
             {
-                if (move.Column is >= 0 and <= 7 && move.Row is >= 0 and <= 7)
+                if (move.Column is < 0 or > 7 || move.Row is < 0 or > 7) // Exclude out-of-bounds coordinates
                 {
-                    Piece destination = Matrix.GetPiece(Reference, move);
-                    if (destination == null || (destination.Side != Side))
-                    {
-                        trollList.Add(move);
-                        return true;
-                    }
+                    availableMoves.Remove(move);
+                } 
+                
+                Piece destination = Matrix.GetPiece(Reference, move);
+                
+                if (destination != null && destination.Side == Side) // Exclude allied pieces
+                {
+                    availableMoves.Remove(move);
                 }
             }
-            availableMoves = trollList;
-            return false;
+
+            return true;
         }
     }
 

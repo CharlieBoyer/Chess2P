@@ -6,6 +6,7 @@ using System.Reflection;
 using View;
 using AI;
 using Enums;
+using Node = MiniMax.Node;
 
 namespace Data
 {
@@ -147,6 +148,7 @@ namespace Data
                 for (int row = 0; row < BoardSize; row++)
                 {
                     Piece piece = grid[column, row];
+                    
                     if (piece != null && piece.Side == side)
                         pieces.Add(piece);
                 }

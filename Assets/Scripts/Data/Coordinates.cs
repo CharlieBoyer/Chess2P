@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Data
@@ -14,6 +15,15 @@ namespace Data
         {
             Row = row;
             Column = column;
+        }
+        
+        [CanBeNull]
+        public override string ToString()
+        {
+            string column = $"{(char)(Column + 65)}";
+            string row = $"{Row + 1}";
+            
+            return column + row;
         }
 
         public bool Equals(Coordinates other)

@@ -8,7 +8,7 @@
       "hash": "49fd57a9e777b07a5f2904583abf1ee3c6818696"
     },
     "com.unity.burst": {
-      "version": "1.8.12",
+      "version": "1.8.13",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -27,7 +27,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.collab-proxy": {
-      "version": "2.2.0",
+      "version": "2.3.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
@@ -41,7 +41,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.rider": {
-      "version": "3.0.27",
+      "version": "3.0.28",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -196,7 +196,7 @@
       }
     },
     "com.unity.visualscripting": {
-      "version": "1.9.1",
+      "version": "1.9.2",
       "depth": 0,
       "source": "registry",
       "dependencies": {

@@ -36,7 +36,7 @@ namespace Data.Pieces
             for (int column = currentColumn - 1, row = currentRow - 1; row >= 0 && column >= 0; row--, column--) // Downward-left
                 availableMoves.Add(new Coordinates(column, row));
 
-            ValidateMoves(ref availableMoves);
+            ValidateMoves(availableMoves);
             
             return availableMoves;
         }

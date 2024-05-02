@@ -27,7 +27,7 @@ namespace Data.Pieces
             GetAlignedCells(availableMoves, currentColumn, currentRow);
             GetDiagonalCells(availableMoves, currentColumn, currentRow);
 
-            ValidateMoves(ref availableMoves);
+            ValidateMoves(availableMoves);
             return availableMoves;
         }
         
