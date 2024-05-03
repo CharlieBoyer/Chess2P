@@ -39,26 +39,7 @@ namespace Data.Pieces
             ValidateMoves(availableMoves);
             return availableMoves;
         }
-
-        protected override bool ValidateMoves(List<Coordinates> availableMoves)
-        {
-            foreach (Coordinates move in availableMoves.ToList())
-            {
-                if (move.Column is < 0 or > 7 || move.Row is < 0 or > 7) // Exclude out-of-bounds coordinates
-                {
-                    availableMoves.Remove(move);
-                } 
-                
-                Piece destination = Matrix.GetPiece(Reference, move);
-                
-                if (destination != null && destination.Side == Side) // Exclude allied pieces
-                {
-                    availableMoves.Remove(move);
-                }
-            }
-
-            return true;
-        }
     }
+    
 
 }

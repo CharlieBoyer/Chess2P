@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-
+using System.Linq;
 using Enums;
 using Data.Pieces;
 
@@ -12,14 +12,12 @@ namespace Data
         public Coordinates Coordinates { get; set; }
         public Side Side { get; set; }
         public bool HasMoved { get; set; }
-        
 
         public abstract float Heuristic { get; }
 
-        public string Type => this.GetType().Name;
-        public bool IsTheKing => this.GetType() == typeof(King);
-        public bool IsNotTheKing => this.GetType() != typeof(King);
-        
+        public string Type => GetType().Name;
+        public bool IsTheKing => GetType() == typeof(King);
+
         protected Piece(Side side, Coordinates coordinates, Piece[,] reference)
         {
             Coordinates = coordinates;
@@ -31,9 +29,9 @@ namespace Data
         protected Piece(Piece copy, Piece[,] reference)
         {
             Reference = reference;
-            this.Coordinates = copy.Coordinates;
-            this.Side = copy.Side;
-            this.HasMoved = copy.HasMoved;
+            Coordinates = copy.Coordinates;
+            Side = copy.Side;
+            HasMoved = copy.HasMoved;
         }
 
         public static Piece Create(string prefabName, Coordinates coordinates)
@@ -59,42 +57,23 @@ namespace Data
         
         public abstract List<Coordinates> AvailableMoves();
         
-        protected virtual bool ValidateMoves(List<Coordinates> availableMoves)
+        protected virtual void ValidateMoves(List<Coordinates> availableMoves)
         {
-            int availableMoveSize = availableMoves.Count;
-            
-            for (int index = 0; index < availableMoveSize; index++) // Foreach valid moves detected, double-check the validity.
+            foreach (Coordinates move in availableMoves.ToList())
             {
-                Coordinates move = availableMoves[index];
-                
-                if (move.Column is < 0 or > 7 || move.Row is < 0 or > 7) { // Filters-out falty moves outside the board and skip;
-                    availableMoves.Remove(move);
-                    availableMoveSize = availableMoves.Count;
-                    continue;
-                }
-                
-                Piece destinationPiece = Matrix.GetPiece(move); // Here move should be always valid (inside the board bounds).
-
-                if (destinationPiece is not null) // If a piece exist at the provided coords...
+                if (move.Column is < 0 or > 7 || move.Row is < 0 or > 7) // Exclude out-of-bounds coordinates
                 {
-                    if (destinationPiece.Side == Side || destinationPiece.IsTheKing) {
-                        availableMoves.Remove(move); // ...exclude it, if it's a allied piece.
-                        availableMoveSize = availableMoves.Count;
-                    }
-                    continue; // Skip to the next move;
+                    availableMoves.Remove(move);
+                } 
+                
+                Piece destination = Matrix.GetPiece(Reference, move);
+                
+                if (destination != null && destination.Side == Side) // Exclude allied pieces
+                {
+                    availableMoves.Remove(move);
                 }
-            
-                // At this point, the move should still be valid as the piece reference a empty cell (null)
             }
-
-            return true;
         }
-
-        protected virtual int ValidateSingleMove(Coordinates coordinates)
-        {
-            return 0;
-        }
-        
 
         #region Equality and Copy
 
@@ -114,7 +93,7 @@ namespace Data
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
+            if (obj.GetType() != GetType()) return false;
             return Equals((Piece)obj);
         }
 

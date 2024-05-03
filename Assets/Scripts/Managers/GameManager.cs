@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 using View;
 using Data;
@@ -46,7 +43,6 @@ namespace Managers
             CurrentPlayerTurn = Side.Light;
             TurnCounter = 1;
             Checkmate = false;
-            Checkmate = false;
             Stalemate = false;
             Draw = false;
         }
@@ -55,16 +51,17 @@ namespace Managers
             Node.GenerateNodeTree(Matrix.Grid, AIDepth, Side.Light);
             // StartCoroutine(StartGameLoop());
         }
+        
         private void Update()
         {
-            CheckExitEscape(Input.GetKeyDown(KeyCode.Escape));
+            /* CheckExitEscape(Input.GetKeyDown(KeyCode.Escape));
             
             if (_updateOnce) {
                 UIManager.UpdateTurn(CurrentPlayerTurn);
                 _updateOnce = false;
-            }
+            } */
         }
-
+ 
         #region Gameplay
         
         public void PerformMovement(Coordinates origin, Coordinates destination)
@@ -174,11 +171,6 @@ namespace Managers
                 _escapeTimer = 3f;
 
             _escapeTimer -= Time.deltaTime;
-        }
-        
-        private void DebugNodeTree(int depth, Piece[,] grid)
-        {
-
         }
 
         #endregion

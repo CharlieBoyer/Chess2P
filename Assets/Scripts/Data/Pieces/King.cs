@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Enums;
 using UnityEngine;
 
@@ -38,6 +39,31 @@ namespace Data.Pieces
 
             ValidateMoves(availableMoves);
             return availableMoves;
+        }
+        
+        protected override void ValidateMoves(List<Coordinates> availableMoves)
+        {
+            base.ValidateMoves(availableMoves);
+
+            foreach (Coordinates remainingMove in availableMoves.ToList()) // Should avoid moves that self-check
+            {
+                NextRemainingMove:
+                Piece[,] testGrid = Matrix.DuplicateGrid(Reference);
+                Matrix.VirtualPerform(testGrid, Side, this.Coordinates, remainingMove);
+                List<Piece> piecesToConfront = Matrix.GetAllPieces(testGrid, Side == Side.Light ? Side.Dark : Side.Light);
+                
+                foreach (Piece piece in piecesToConfront)
+                {
+                    foreach (Coordinates move in piece.AvailableMoves())
+                    {
+                        if (move.Equals(this.Coordinates)) // King is threaten by this piece
+                        {
+                            availableMoves.Remove(remainingMove);
+                            goto NextRemainingMove;
+                        }
+                    }
+                }
+            }
         }
     }
 }

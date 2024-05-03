@@ -65,13 +65,13 @@ namespace MiniMax
                 foreach (Coordinates move in moves)
                 {
                     // 2 - Copier la matrice actuel
-                    Piece[,] newMatrix = Data.Matrix.DuplicateSnapshot(Matrix);
+                    Piece[,] newMatrix = Data.Matrix.DuplicateGrid(Matrix);
                 
                     // 3 - Créer un Node contenant tout les information nécessaire (la nouvelle matrice, les sides)
                     Node childNode = new Node(IsRoot ? Owner : OpponentTurn, newMatrix, piece.Coordinates, move);
 
                     // 4 - Jouer le mouvement sur la matrice actuel
-                    Data.Matrix.VirtualPerform(childNode);
+                    // Data.Matrix.VirtualPerform(childNode);
                 
                     // 5 - Ajouter le node a la liste des enfants à retourner
                     nodeList.Add(childNode);

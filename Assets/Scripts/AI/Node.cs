@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Text;
+using Managers;
 using Data;
 using Enums;
-using Managers;
+using Debug = UnityEngine.Debug;
 
 namespace AI
 {
@@ -19,7 +22,7 @@ namespace AI
 
         public Node(Piece[,] grid, int depth, Coordinates? origin, Coordinates? destination, Node parent = null)
         {
-            Grid = Matrix.DuplicateSnapshot(grid);
+            Grid = Matrix.DuplicateGrid(grid);
             Depth = depth;
             Origin = origin;
             Destination = destination;
@@ -76,23 +79,37 @@ namespace AI
 
         public static void GenerateNodeTree(Piece[,] grid, int depth, Side startingTurn)
         {
+            Debug.Log("> Root node instantiated !");
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
             Node rootNode = new Node(grid, 0, null, null);
-            GenerateNodeTreeRecursive(rootNode, depth, startingTurn, 0);
+
+            StringBuilder logBuilder = new StringBuilder();
+            GenerateNodeTreeRecursive(rootNode, depth, startingTurn, 0, logBuilder);
+            
+            stopwatch.Stop();
+            TimeSpan elapsedTime = stopwatch.Elapsed;
+            string formattedElapsedTime = $"{elapsedTime.Minutes:00}m {elapsedTime.Seconds:00}s {elapsedTime.Milliseconds:000}ms";
+            Debug.Log($"\n> Test completed in : {formattedElapsedTime}");
+            
+            Debug.Log(logBuilder.ToString());
         }
 
-        private static void GenerateNodeTreeRecursive(Node node, int maxDepth, Side turn, int currentDepth)
+        private static void GenerateNodeTreeRecursive(Node node, int maxDepth, Side turn, int currentDepth, StringBuilder logBuilder)
         {
             string indent = new string(' ', currentDepth * 2);
-            Console.WriteLine($"{indent}{node.Depth}: {node.Origin} -> {node.Destination}");
+            if (node.Origin == null && node.Destination == null)
+                logBuilder.AppendLine($"{indent}{currentDepth}: Root");
+            else
+                logBuilder.AppendLine($"{indent}{currentDepth}: {node.Origin} -> {node.Destination}");
 
-            if (currentDepth < maxDepth && !node.IsTerminal())
-            {
-                node.GenerateChildren(turn);
+            if (currentDepth >= maxDepth || node.IsTerminal()) return;
+            
+            node.GenerateChildren(turn);
 
-                foreach (Node child in node.Children)
-                {
-                    GenerateNodeTreeRecursive(child, maxDepth, turn == Side.Light ? Side.Dark : Side.Light, currentDepth + 1);
-                }
+            foreach (Node child in node.Children) {
+                GenerateNodeTreeRecursive(child, maxDepth, turn == Side.Light ? Side.Dark : Side.Light, currentDepth + 1, logBuilder);
             }
         }
 

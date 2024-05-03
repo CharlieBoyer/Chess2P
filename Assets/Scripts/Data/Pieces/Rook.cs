@@ -71,7 +71,7 @@ namespace Data.Pieces
             return availableMoves;
         }
         
-        protected override int ValidateSingleMove(Coordinates coordinates)
+        protected int ValidateSingleMove(Coordinates coordinates)
         {
             Piece piece = Matrix.GetPiece(this.Reference, coordinates);
 
