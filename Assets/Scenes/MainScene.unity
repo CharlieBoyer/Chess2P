@@ -6656,9 +6656,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Board: {fileID: 2155730284398455825}
-  AIDepth: 2
+  AIDepth: 3
+  HeuristicCalculationMode: 0
+  AutoPlay: 0
   AutoPlayInterval: 2
-  EnableStepByStep: 1
 --- !u!1 &1851066645
 GameObject:
   m_ObjectHideFlags: 0

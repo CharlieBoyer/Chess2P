@@ -47,7 +47,6 @@ namespace Data.Pieces
 
             foreach (Coordinates remainingMove in availableMoves.ToList()) // Should avoid moves that self-check
             {
-                NextRemainingMove:
                 Piece[,] testGrid = Matrix.DuplicateGrid(Reference);
                 Matrix.VirtualPerform(testGrid, Side, this.Coordinates, remainingMove);
                 List<Piece> piecesToConfront = Matrix.GetAllPieces(testGrid, Side == Side.Light ? Side.Dark : Side.Light);
@@ -56,10 +55,20 @@ namespace Data.Pieces
                 {
                     foreach (Coordinates move in piece.AvailableMoves())
                     {
-                        if (move.Equals(this.Coordinates)) // King is threaten by this piece
-                        {
+                        if (move.Equals(this.Coordinates)) { // King is threaten by this piece
                             availableMoves.Remove(remainingMove);
-                            goto NextRemainingMove;
+                            
+                            // goto du caca replaced by :
+                            /*
+                                $$$$$$$\  $$$$$$$$\ $$\      $$\  $$$$$$\   $$$$$$\  $$$$$$$\   $$$$$$\ $$$$$$$$\ $$\     $$\ 
+                                $$  __$$\ $$  _____|$$$\    $$$ |$$  __$$\ $$  __$$\ $$  __$$\ $$  __$$\\__$$  __|\$$\   $$  |
+                                $$ |  $$ |$$ |      $$$$\  $$$$ |$$ /  $$ |$$ /  \__|$$ |  $$ |$$ /  $$ |  $$ |    \$$\ $$  / 
+                                $$ |  $$ |$$$$$\    $$\$$\$$ $$ |$$ |  $$ |$$ |      $$$$$$$  |$$$$$$$$ |  $$ |     \$$$$  /  
+                                $$ |  $$ |$$  __|   $$ \$$$  $$ |$$ |  $$ |$$ |      $$  __$$< $$  __$$ |  $$ |      \$$  /   
+                                $$ |  $$ |$$ |      $$ |\$  /$$ |$$ |  $$ |$$ |  $$\ $$ |  $$ |$$ |  $$ |  $$ |       $$ |    
+                                $$$$$$$  |$$$$$$$$\ $$ | \_/ $$ | $$$$$$  |\$$$$$$  |$$ |  $$ |$$ |  $$ |  $$ |       $$ |    
+                                \_______/ \________|\__|     \__| \______/  \______/ \__|  \__|\__|  \__|  \__|       \__|
+                             */
                         }
                     }
                 }

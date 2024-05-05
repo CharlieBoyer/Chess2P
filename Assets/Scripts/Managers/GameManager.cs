@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 using View;
 using Data;
@@ -13,15 +14,20 @@ namespace Managers
 
         #region Inspector
 
-            [Header("Settings")]
+            [Header("References")]
             public Board Board;
-            [Range(1,8)] public int AIDepth;
-            [Range(0.001f, 3f)] public float AutoPlayInterval = 2;
-            public bool EnableStepByStep;
             
-        #endregion
+            [Header("AI Behavior")]
+            [Range(1,10000)] public int AIDepth;
+            public HeuristicMode HeuristicCalculationMode = HeuristicMode.PiecesValueSum;
+            
+            [Header("Game progression")]
+            public bool AutoPlay;
+            [Range(0.001f, 3f)] public float AutoPlayInterval = 2;
+
+            #endregion
         
-        public static int Depth { get; private set; }
+        public static HeuristicMode HeuristicMode;
         public static Side CurrentPlayerTurn { get; private set; }
         public static Side OpponentTurn => (CurrentPlayerTurn == Side.Light ? Side.Dark : Side.Light);
         public static int TurnCounter { get; private set; }
@@ -39,7 +45,7 @@ namespace Managers
         
         private void Awake()
         {
-            Depth = AIDepth;
+            HeuristicMode = HeuristicCalculationMode;
             CurrentPlayerTurn = Side.Light;
             TurnCounter = 1;
             Checkmate = false;
@@ -48,21 +54,43 @@ namespace Managers
         }
         private void Start()
         {
-            Node.GenerateNodeTree(Matrix.Grid, AIDepth, Side.Light);
+            StartCoroutine(Node.RunNodeGenerationCoroutine(Matrix.Grid, AIDepth));
             // StartCoroutine(StartGameLoop());
         }
         
         private void Update()
         {
-            /* CheckExitEscape(Input.GetKeyDown(KeyCode.Escape));
+            CheckExitEscape(Input.GetKeyDown(KeyCode.Escape));
             
             if (_updateOnce) {
                 UIManager.UpdateTurn(CurrentPlayerTurn);
                 _updateOnce = false;
-            } */
+            }
         }
  
         #region Gameplay
+        
+        private IEnumerator StartGameLoop()
+        {
+            while (!Checkmate)
+            {
+                // Ask AI to think
+                // Wait until completion // yield return new WaitUntil(() => Think);
+                // Perform move
+                // Update Board
+                
+                if (AutoPlay)
+                {
+                    yield return new WaitForSeconds(2);
+                }
+                else
+                {
+                    yield return new WaitUntil(() => Input.GetButtonDown("Submit") || Input.GetButtonDown("Jump"));
+                }
+                
+                ChangeTurn();
+            }
+        }
         
         public void PerformMovement(Coordinates origin, Coordinates destination)
         {
@@ -88,7 +116,7 @@ namespace Managers
         private void AIThink(Side playerSide)
         {
             Node root = new Node(Matrix.Grid, 0, null, null);
-            Node bestMoveNode = MinMax(root, Depth, playerSide == CurrentPlayerTurn);
+            Node bestMoveNode = MinMax(root, AIDepth, playerSide == CurrentPlayerTurn);
             
             if (bestMoveNode.Origin.HasValue && bestMoveNode.Destination.HasValue)
             {
@@ -107,7 +135,7 @@ namespace Managers
 
         public Node MinMax(Node node, int depth, bool isMaximizingPlayer)
         {
-            if (depth == 0 || node.IsTerminal())
+            if (depth == 0 || node.IsTerminal() > 0)
             {
                 node.EvaluateHeuristics();
                 return node;

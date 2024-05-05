@@ -260,6 +260,24 @@ namespace Data
             matrixCopy[originCoords.Column, originCoords.Row] = null;
         }
 
+        public static bool IsInCheck(Piece[,] grid, Side sideToCheck)
+        {
+            Coordinates kingCoords = GetKing(grid, sideToCheck).Coordinates;
+            Side opponent = sideToCheck == Side.Light ? Side.Dark : Side.Light;
+            List<Piece> opponentPieces = GetAllPieces(grid, opponent);
+            
+            foreach (Piece opponentPiece in opponentPieces)
+            {
+                // Check if the opponent's piece can move to the king's position
+                if (opponentPiece.AvailableMoves().Contains(kingCoords))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        
         public static Piece[,] GetCurrentGridSnapshot() // Deep Copy
         {
             Piece[,] snapshot = new Piece[BoardSize, BoardSize];
